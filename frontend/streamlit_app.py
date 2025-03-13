@@ -159,17 +159,27 @@ if st.button("Summarize Document"):
         if response.status_code == 200:
             task_id = response.json().get("task_id")
 
-            # polling the redis stream
             summary = None
+            input_tokens = None
+            output_tokens = None
+            cost = None
+
             for _ in range(30):
                 result_response = requests.get(f"{BASE_URL}/get_result/{task_id}")
-                if result_response.status_code==200:
-                    summary = result_response.json().get("result", "No summary available.")
+                if result_response.status_code == 200:
+                    result_data = result_response.json()
+                    summary = result_data.get("result", "No summary available.")
+                    input_tokens = result_data.get("input_tokens", "N/A")
+                    output_tokens = result_data.get("output_tokens", "N/A")
+                    cost = result_data.get("cost", "Cost unavailable.")
                     break
                 else:
                     time.sleep(1)
-            
+
             st.session_state["summary_text"] = summary
+            st.session_state["input_tokens"] = input_tokens
+            st.session_state["output_tokens"] = output_tokens
+            st.session_state["summary_cost"] = cost
 
             summary_status.markdown("**Generated Summary:**", unsafe_allow_html=True)
 
@@ -179,6 +189,11 @@ if st.button("Summarize Document"):
                 height=200,
                 disabled=True
             )
+
+            with st.expander("Token Usage & Cost Details"):
+                st.markdown(f"**Total Cost:** {st.session_state['summary_cost']}")
+                st.markdown(f"**Input Tokens (Prompt):** {st.session_state['input_tokens']}")
+                st.markdown(f"**Output Tokens (Completion):** {st.session_state['output_tokens']}")
         else:
             st.error(f"Failed to generate summary: {response.text}")
             summary_status.empty()
@@ -208,18 +223,35 @@ if st.button("Get Answer"):
         if response.status_code == 200:
             task_id = response.json().get("task_id")
 
-            # Polling Redis stream for Q&A result
             answer_result = None
+            input_tokens = None
+            output_tokens = None
+            cost = None
+
             for _ in range(30):
                 result_response = requests.get(f"{BASE_URL}/get_result/{task_id}")
                 if result_response.status_code == 200:
-                    answer_result = result_response.json().get("result", "No answer found.")
+                    result_data = result_response.json()
+                    answer_result = result_data.get("result", "No answer found.")
+                    input_tokens = result_data.get("input_tokens", "N/A")
+                    output_tokens = result_data.get("output_tokens", "N/A")
+                    cost = result_data.get("cost", "Cost unavailable.")
                     break  
                 else:
                     time.sleep(1)
 
             st.session_state["answer_text"] = answer_result
+            st.session_state["qa_input_tokens"] = input_tokens
+            st.session_state["qa_output_tokens"] = output_tokens
+            st.session_state["qa_cost"] = cost
+
             st.markdown("### Answer")
             st.write(st.session_state["answer_text"])
+
+            with st.expander("Token Usage & Cost Details"):
+                st.markdown(f"**Total Cost:** {st.session_state['qa_cost']}")
+                st.markdown(f"**Input Tokens (Prompt):** {st.session_state['qa_input_tokens']}")
+                st.markdown(f"**Output Tokens (Completion):** {st.session_state['qa_output_tokens']}")
+
         else:
             st.error(f"Failed to get answer: {response.text}")

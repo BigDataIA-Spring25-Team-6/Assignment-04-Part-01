@@ -1,5 +1,5 @@
 import redis
-from litellm import completion
+from litellm import completion, completion_cost
 from dotenv import load_dotenv
 import os
 
@@ -44,10 +44,26 @@ def process_task(task):
                 messages=[{"role": "user", "content": f"Summarize this document:\n{document_content}"}],
                 api_key=api_key,
             )
+
+            summarize_usage = response.usage
+            input_tokens = summarize_usage.prompt_tokens 
+            output_tokens = summarize_usage.completion_tokens  
+            summarize_cost = completion_cost(completion_response=response)
+            formatted_string = f"${float(summarize_cost):.10f}"
             summary = response["choices"][0]["message"]["content"]
-            redis_client.hset(RESULT_STREAM, task["id"], summary)
+
+       
+            result_data = {
+                "result": summary,
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "cost": formatted_string
+            }
+            redis_client.hset(RESULT_STREAM, task["id"], str(result_data))
+
             print(f"Summary processed for Task ID {task['id']}")
-        
+            print(f"Input Tokens: {input_tokens}, Output Tokens: {output_tokens}, Total Cost: {formatted_string}")
+     
         elif task_type == "ask_question":
             question = task.get("question")
             if not question:
@@ -62,10 +78,25 @@ def process_task(task):
                 ],
                 api_key=api_key,
             )
+
+            qa_usage = response.usage
+            input_tokens = qa_usage.prompt_tokens
+            output_tokens = qa_usage.completion_tokens
+            qa_cost = completion_cost(completion_response=response)
+            formatted_string = f"${float(qa_cost):.10f}"
             answer = response["choices"][0]["message"]["content"]
-            redis_client.hset(RESULT_STREAM, task["id"], answer)
+
+            result_data = {
+                "result": answer,
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "cost": formatted_string
+            }
+            redis_client.hset(RESULT_STREAM, task["id"], str(result_data))
+
             print(f"Answer processed for Task ID {task['id']}")
-        
+            print(f"Input Tokens: {input_tokens}, Output Tokens: {output_tokens}, Total Cost: {formatted_string}")
+
         else:
             print(f"Unknown task type: {task_type}")
     

@@ -7,6 +7,7 @@ from storage.s3_utils import s3_client, S3_BUCKET_NAME,generate_presigned_url
 from pydantic import BaseModel
 import redis
 import requests
+import ast
 
 app = FastAPI()
 
@@ -150,7 +151,18 @@ async def get_result(task_id: str):
         result = redis_client.hget(RESULT_STREAM, task_id)
         if not result:
             raise HTTPException(status_code=404, detail="Result not found")
-        return {"task_id": task_id, "result": result}
+
+        print(f"Retrieved result for Task ID {task_id}: {result}")
+        # Convert Redis string back to dictionary
+        result_data = ast.literal_eval(result)
+
+        return {
+            "task_id": task_id,
+            "result": result_data.get("result", "No result available."),
+            "input_tokens": result_data.get("input_tokens", "N/A"),
+            "output_tokens": result_data.get("output_tokens", "N/A"),
+            "cost": result_data.get("cost", "Cost unavailable.")
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving result: {str(e)}")
 
