@@ -1,6 +1,7 @@
 import boto3
 import os
 from dotenv import load_dotenv
+from botocore.exceptions import NoCredentialsError
 
 # Load environment variables from .env file
 load_dotenv()
@@ -75,3 +76,26 @@ def upload_file_to_s3(file_path: str, source: str, metadata: dict = None) -> str
         return f"https://{S3_BUCKET_NAME}.s3.amazonaws.com/{object_key}"
     except Exception as e:
         raise RuntimeError(f"Error uploading {file_path} to S3: {str(e)}")
+    
+
+def generate_presigned_url(object_key, expiration=3600):
+    """
+    Generate a presigned URL for an object in S3.
+
+    Args:
+        object_key (str): S3 object key (file path).
+        expiration (int): Time in seconds before the link expires.
+
+    Returns:
+        str: Presigned URL to access the file.
+    """
+    try:
+        url = s3_client.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": S3_BUCKET_NAME, "Key": object_key},
+            ExpiresIn=expiration,
+        )
+        return url
+    except NoCredentialsError:
+        print("Credentials not available.")
+        return None
