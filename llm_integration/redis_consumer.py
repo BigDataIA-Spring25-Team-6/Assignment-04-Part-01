@@ -10,7 +10,7 @@ MODEL_API_KEYS = {
     "gpt-4o": {"model": "gpt-4o", "api_key": os.getenv("OPENAI_API_KEY")},  
     "gemini-flash": {"model": "gemini-2.0-flash-exp", "api_key": os.getenv("GOOGLE_API_KEY")},  
     "deepseek": {"model": "deepseek/deepseek-chat", "api_key": os.getenv("DEEPSEEK_API_KEY")}, 
-    "claude": {"model": "claude-3-5-sonnet-20240620", "api_key": os.getenv("ANTHROPIC_API_KEY")},  
+    "claude": {"model": "claude-3-5-sonnet-20241022", "api_key": os.getenv("ANTHROPIC_API_KEY")},  
     "grok": {"model": "xai/grok-2-1212", "api_key": os.getenv("GROK_API_KEY")},  
 }
 
@@ -22,7 +22,6 @@ TASK_STREAM = "task_stream"
 RESULT_STREAM = "result_stream"
 
 def process_task(task):
-    print("in process_task")
     task_type = task.get("task_type")
     model_name = task.get("model_name")
     document_content = task.get("document_content")
@@ -40,22 +39,16 @@ def process_task(task):
     
     try:
         if task_type == "summarize":
-            print("in summarize")
-            print(f"Model: {model}, API Key: {api_key}")
             response = completion(
                 model=model,
                 messages=[{"role": "user", "content": f"Summarize this document:\n{document_content}"}],
-                max_tokens=200,
                 api_key=api_key,
             )
-            print(f"LiteLLM Response: {response}")
             summary = response["choices"][0]["message"]["content"]
             redis_client.hset(RESULT_STREAM, task["id"], summary)
             print(f"Summary processed for Task ID {task['id']}")
         
         elif task_type == "ask_question":
-            print("in question")
-            print(f"Model: {model}, API Key: {api_key}")
             question = task.get("question")
             if not question:
                 print("Invalid question data")
@@ -67,7 +60,6 @@ def process_task(task):
                     {"role": "system", "content": f"This is a document:\n{document_content}"},
                     {"role": "user", "content": question},
                 ],
-                max_tokens=150,
                 api_key=api_key,
             )
             answer = response["choices"][0]["message"]["content"]

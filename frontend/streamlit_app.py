@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import os
+import time
 
 # FastAPI Backend URL
 BASE_URL = "http://127.0.0.1:8000"
@@ -156,7 +157,19 @@ if st.button("Summarize Document"):
         )
 
         if response.status_code == 200:
-            st.session_state["summary_text"] = response.json().get("summary", "No summary available.")
+            task_id = response.json().get("task_id")
+
+            # polling the redis stream
+            summary = None
+            for _ in range(30):
+                result_response = requests.get(f"{BASE_URL}/get_result/{task_id}")
+                if result_response.status_code==200:
+                    summary = result_response.json().get("result", "No summary available.")
+                    break
+                else:
+                    time.sleep(1)
+            
+            st.session_state["summary_text"] = summary
 
             summary_status.markdown("**Generated Summary:**", unsafe_allow_html=True)
 
@@ -193,7 +206,19 @@ if st.button("Get Answer"):
         )
 
         if response.status_code == 200:
-            st.session_state["answer_text"] = response.json().get("answer", "No answer found.")
+            task_id = response.json().get("task_id")
+
+            # Polling Redis stream for Q&A result
+            answer_result = None
+            for _ in range(30):
+                result_response = requests.get(f"{BASE_URL}/get_result/{task_id}")
+                if result_response.status_code == 200:
+                    answer_result = result_response.json().get("result", "No answer found.")
+                    break  
+                else:
+                    time.sleep(1)
+
+            st.session_state["answer_text"] = answer_result
             st.markdown("### Answer")
             st.write(st.session_state["answer_text"])
         else:
