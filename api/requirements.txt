@@ -1,0 +1,7 @@
+uvicorn
+fastapi
+botocore
+redis
+requests
+docling
+python-dotenv

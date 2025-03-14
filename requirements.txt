@@ -1,0 +1,12 @@
+boto3
+docling
+fastapi
+uvicorn
+python-multipart
+litellm
+redis
+python-dotenv
+docling
+requests
+streamlit
+Flask
