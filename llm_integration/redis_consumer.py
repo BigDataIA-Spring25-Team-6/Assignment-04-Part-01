@@ -2,20 +2,40 @@ import redis
 from litellm import completion, completion_cost
 from dotenv import load_dotenv
 import os
+from flask import Flask
+import threading
+import time
+
+import redis.exceptions
 
 load_dotenv()
 
+app = Flask(__name__)
+ 
+@app.route("/")
+def health_check():
+    return "LLM Consumer Running", 200
+ 
+def start_flask_server():
+    """ Starts a dummy Flask server to keep Cloud Run alive """
+    app.run(host="0.0.0.0", port=8080)
+ 
+threading.Thread(target=start_flask_server).start()
+
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
+REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", None)
 
 MODEL_API_KEYS = {
     "gpt-4o": {"model": "gpt-4o", "api_key": os.getenv("OPENAI_API_KEY")},  
-    "gemini-flash": {"model": "gemini-2.0-flash-exp", "api_key": os.getenv("GOOGLE_API_KEY")},  
+    "gemini-flash": {"model": "gemini/gemini-2.0-flash-exp", "api_key": os.getenv("GOOGLE_API_KEY")},  
     "deepseek": {"model": "deepseek/deepseek-chat", "api_key": os.getenv("DEEPSEEK_API_KEY")}, 
     "claude": {"model": "claude-3-5-sonnet-20241022", "api_key": os.getenv("ANTHROPIC_API_KEY")},  
     "grok": {"model": "xai/grok-2-1212", "api_key": os.getenv("GROK_API_KEY")},  
 }
 
 # Connect to Redis
-redis_client = redis.Redis(host="localhost", port=6379, decode_responses=True)
+redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT,password=REDIS_PASSWORD, decode_responses=True)
 
 # Redis stream keys
 TASK_STREAM = "task_stream"
@@ -105,8 +125,18 @@ def process_task(task):
 
 # Listen for new tasks in the stream
 while True:
-    entries = redis_client.xread({TASK_STREAM: "$"}, block=0)  # Block until new entries arrive
-    for stream_name, messages in entries:
-        for message_id, message_data in messages:
-            print(f"Processing Task ID {message_id}")
-            process_task({"id": message_id, **message_data})
+    try:
+        entries = redis_client.xread({TASK_STREAM: "$"}, block=10000)
+        for stream_name, messages in entries:
+            for message_id, message_data in messages:
+                print(f"Processing Task ID {message_id}")
+                process_task({"id": message_id, **message_data})
+    
+    except redis.exceptions.ConnectionError as e:
+        print("Reconnecting to Redis...")
+        redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT,password=REDIS_PASSWORD, decode_responses=True)
+    
+    except Exception as e:
+        print(f"Unexpected error in the loop: {e}")
+        time.sleep(2)  # Prevent crash loops
+

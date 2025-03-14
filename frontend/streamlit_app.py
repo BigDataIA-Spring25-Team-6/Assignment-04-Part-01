@@ -4,7 +4,7 @@ import os
 import time
 
 # FastAPI Backend URL
-BASE_URL = "http://127.0.0.1:8000"
+BASE_URL = "https://backend-541167511413.us-central1.run.app"
 
 # Set up the page layout
 st.set_page_config(page_title="PDF Analyzer", layout="centered")
@@ -62,7 +62,7 @@ if selected_tab == "New PDF":
         reset_session()
 
         files = {"file": uploaded_file}
-        response = requests.post(f"{BASE_URL}/upload_pdf", files=files)
+        response = requests.post(f"{BASE_URL}/upload_pdf/", files=files)
 
         if response.status_code == 200:
             data = response.json()
@@ -75,7 +75,7 @@ if selected_tab == "New PDF":
 elif selected_tab == "Processed PDF":
     st.markdown("#### Select a Previously Processed PDF")
 
-    response = requests.get(f"{BASE_URL}/select_pdfcontent")
+    response = requests.get(f"{BASE_URL}/select_pdfcontent/")
     if response.status_code == 200:
         processed_pdfs = response.json().get("processed_pdfs", {})
         markdown_files = {
@@ -174,7 +174,7 @@ if st.button("Summarize Document"):
                     cost = result_data.get("cost", "Cost unavailable.")
                     break
                 else:
-                    time.sleep(1)
+                    time.sleep(5)
 
             st.session_state["summary_text"] = summary
             st.session_state["input_tokens"] = input_tokens
@@ -238,7 +238,7 @@ if st.button("Get Answer"):
                     cost = result_data.get("cost", "Cost unavailable.")
                     break  
                 else:
-                    time.sleep(1)
+                    time.sleep(5)
 
             st.session_state["answer_text"] = answer_result
             st.session_state["qa_input_tokens"] = input_tokens

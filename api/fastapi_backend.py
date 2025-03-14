@@ -8,6 +8,14 @@ from pydantic import BaseModel
 import redis
 import requests
 import ast
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
+REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", None)
 
 app = FastAPI()
 
@@ -20,7 +28,7 @@ app.add_middleware(
 )
 
 # Connect to Redis
-redis_client = redis.Redis(host="localhost", port=6379, decode_responses=True)
+redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT,password=REDIS_PASSWORD, decode_responses=True)
 
 # Redis stream keys
 TASK_STREAM = "task_stream"
