@@ -36,6 +36,10 @@ The project aims to build an interactive Streamlit web application with backend 
 ## Codelabs Documentation
 (https://codelabs-preview.appspot.com/?file_id=15u3ISoyIAyo5sf330sx46cRe1uK48j4NtYSDqzU8v3Q#0)
 
+## Hosted Applications links 
+- Frontend : https://frontend-541167511413.us-central1.run.app
+- Backend : https://backend-541167511413.us-central1.run.app
+
 ## Prerequisites
 - Python 3.9+  
 - AWS Account  
