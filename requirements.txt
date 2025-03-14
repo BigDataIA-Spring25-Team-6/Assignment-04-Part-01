@@ -9,3 +9,4 @@ python-dotenv
 docling
 requests
 streamlit
+Flask
