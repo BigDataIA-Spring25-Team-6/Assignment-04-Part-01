@@ -1,9 +1,9 @@
 # Streamlit Application with LLM Integration
 
 ## Team Members
-- **Aditi Ashutosh Deodhar** 002279575  
-- **Lenin Kumar Gorle** 002803806  
-- **Poorvika Girish Babu** 002801388  
+- **Aditi Ashutosh Deodhar**  002279575  
+- **Lenin Kumar Gorle**       002803806  
+- **Poorvika Girish Babu**    002801388  
 
 ## Project Overview
 ### Problem Statement
@@ -74,6 +74,36 @@ streamlit run frontend/app.py
 
 # Docker Setup (optional, for deployment)
 docker-compose up --build
+```
+
+## Project Structure
+
+```
+
+ASSIGNMENT-04-PART-01/
+
+├── .venv/
+
+├── api/               # fastapi code
+
+├── backend/           # backend code for pdf extraction
+
+├── frontend/          # streamlit code
+
+├── llm_integration/   # redis code 
+
+├── storage/           # s3 code
+
+├── .dockerignore
+
+├── .gitignore
+
+├── docker-compose.yml
+
+└── requirements.txt
+
+```
+ 
 
 
 
